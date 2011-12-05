@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Movie Sync</title>
+<title>Media Share</title>
 <script src="AIRAliases.js" type="text/javascript"></script>
 <script src="json2-min.js" type="text/javascript"></script>
 <script src="jquery-1.6.4.min.js" type="text/javascript"></script>
@@ -47,7 +47,7 @@ function loginHandler(event)
 }
 
 function login(){
-	if ( (globalFieldArray["username"] != 'Enter username' ) && (globalFieldArray["password"] != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of Moviesync Database')) {
+	if ( (globalFieldArray["username"] != 'Enter username' ) && (globalFieldArray["password"] != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of MediaShare Database')) {
 	    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/login.json?username="+globalFieldArray["username"]+"&password="+globalFieldArray["password"]); 
         var loader = new air.URLLoader(); 
 	    loader.addEventListener(air.Event.COMPLETE, loginHandler);
@@ -70,24 +70,6 @@ function logout(){
 	var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/logout.json"); 
     var loader = new air.URLLoader(); 
 	loader.addEventListener(air.Event.COMPLETE, logoutHandler);
-    loader.load(request);
- };
-
-function getmovielistHandler(event) 
-{ 
-    var loader = event.target; 
-	var myObject = JSON.parse(loader.data);
-	var result = myObject['result'];
-	if (result == "error") 
-	  login();
-	air.trace("received movie list data:",loader.data); 
-	globalvar1 = true;
-}
-
-function getmovielist(){
-	var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/movies/index.json"); 
-    var loader = new air.URLLoader(); 
-	loader.addEventListener(air.Event.COMPLETE, getmovielistHandler);
     loader.load(request);
  };
 
@@ -140,12 +122,12 @@ window.onload = function() {
     <td  align="right">Watch Directory:</td><td width="300"><input size="35" id="watchDirField" type="text" name="watchDirField" onclick="$(this).css('color','green');"/></td><td><button  id="watchDir"  type="button">Save</button></td>
   </tr>
   <tr>
-    <td  align="right">MovieSync URL:</td><td width="300"><input size="35" id="urlField" type="text" name="urlField" onclick="$(this).css('color','green');"/></td><td><button  id="url"  type="button">Save</button></td>
+    <td  align="right">MediaShare URL:</td><td width="300"><input size="35" id="urlField" type="text" name="urlField" onclick="$(this).css('color','green');"/></td><td><button  id="url"  type="button">Save</button></td>
   </tr>
 </table>
 <table  width="500">
   <tr>
-    <td  align="right"  width="400">MovieSync Database Connection Status:</td><td  width="100"><div id="dbstatus">NO</div></td>
+    <td  align="right"  width="400">MediaShare Database Connection Status:</td><td  width="100"><div id="dbstatus">NO</div></td>
   </tr>
  </table>
 
