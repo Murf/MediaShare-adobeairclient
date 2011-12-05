@@ -1,0 +1,16 @@
+<application xmlns="http://ns.adobe.com/air/application/3.1">
+  <id>MediaShare</id>
+  <versionNumber>0.1</versionNumber>
+  <filename>MediaShare</filename>
+  <copyright></copyright>
+  <customUpdateUI>false</customUpdateUI>
+  <name>MediaShare</name>
+  <initialWindow>
+    <content>MediaShare.html</content>
+    <transparent>false</transparent>
+    <systemChrome>standard</systemChrome>
+    <visible>true</visible> 
+        <width>600</width> 
+        <height>500</height> 
+  </initialWindow> 
+</application>

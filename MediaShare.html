@@ -1,0 +1,181 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Movie Sync</title>
+<script src="AIRAliases.js" type="text/javascript"></script>
+<script src="json2-min.js" type="text/javascript"></script>
+<script src="jquery-1.6.4.min.js" type="text/javascript"></script>
+<script>
+
+
+var db = new air.SQLConnection(); 
+var globalFieldNames = ["username","password","watchDir","url"];
+var globalFieldArray = [];
+var globalLoggedin = false;
+var globalvar1 = false;
+
+function dbConnect() {
+  var dbFile = air.File.applicationStorageDirectory.resolvePath("prefs.db"); 
+  if (!dbFile.exists) {  
+    var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db");  
+    dbTemplate.copyTo(dbFile, true);    
+  }  
+  try 
+  {
+    db.open(dbFile); 
+    air.trace("DB opened");
+  }
+  catch (error)
+  { 
+    air.trace("DB error:", error.message);
+    air.trace("Details:", error.details); 
+  }
+}
+
+function loginHandler(event) 
+{ 
+    var loader = event.target; 
+	var myObject = JSON.parse(loader.data);
+	var result = myObject['result'];
+	if (result == "ok") {
+	   globalLoggedin = true;
+	   $("#dbstatus").html("YES");
+	}
+	//else
+	  //need some error status here
+}
+
+function login(){
+	if ( (globalFieldArray["username"] != 'Enter username' ) && (globalFieldArray["password"] != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of Moviesync Database')) {
+	    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/login.json?username="+globalFieldArray["username"]+"&password="+globalFieldArray["password"]); 
+        var loader = new air.URLLoader(); 
+	    loader.addEventListener(air.Event.COMPLETE, loginHandler);
+        loader.load(request);
+	} 
+ };
+
+function logoutHandler(event) 
+{ 
+    var loader = event.target; 
+	var myObject = JSON.parse(loader.data);
+	var result = myObject['result'];
+	if (result == "ok") 
+	   globalLoggedin = false;
+	//else
+	  //need some error status here
+}
+
+function logout(){
+	var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/logout.json"); 
+    var loader = new air.URLLoader(); 
+	loader.addEventListener(air.Event.COMPLETE, logoutHandler);
+    loader.load(request);
+ };
+
+function getmovielistHandler(event) 
+{ 
+    var loader = event.target; 
+	var myObject = JSON.parse(loader.data);
+	var result = myObject['result'];
+	if (result == "error") 
+	  login();
+	air.trace("received movie list data:",loader.data); 
+	globalvar1 = true;
+}
+
+function getmovielist(){
+	var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/movies/index.json"); 
+    var loader = new air.URLLoader(); 
+	loader.addEventListener(air.Event.COMPLETE, getmovielistHandler);
+    loader.load(request);
+ };
+
+
+function loop() {
+	if (!globalLoggedin) login(); //login, or re-login if session expired
+}
+
+function updateField(field) {
+    dbQuery = new air.SQLStatement();
+	dbQuery.sqlConnection = db;
+	dbQuery.text = "SELECT value FROM preferences where name='"+field+"'";
+	try {     
+        dbQuery.execute();     
+    } catch (error) {     
+        air.trace("Error retrieving preference "+field+" from DB:", error);     
+        air.trace(error.message);     
+        return;     
+    }
+	var value = dbQuery.getResult().data[0].value;
+	globalFieldArray[field] = value;
+	var tag = '#'+field+'Field';
+	$(tag).val(value);
+}
+  
+window.onload = function() {
+	dbConnect();
+	
+	for (fieldkey in globalFieldNames) {
+      updateField(globalFieldNames[fieldkey]);
+    }
+	
+	window.setInterval(loop, 2000); //300000 = 5 mins
+	//loop(); //one shot
+}
+
+</script>
+</head>
+
+<body>
+<br>
+<table width="580" >
+  <tr>
+    <td width="150" align="right">Username:</td><td><input  size="35" id="usernameField" type="text" name="usernameField" onclick="$(this).css('color','green');"/></td><td><button  id="username"  type="button">Save</button></td>
+  </tr>
+  <tr>
+    <td width="150" align="right">Password:</td><td><input  size="35" id="passwordField" type="text" name="passwordField" onclick="$(this).css('color','green');"/></td><td><button  id="password"  type="button">Save</button></td>
+  </tr>
+  <tr>
+    <td  align="right">Watch Directory:</td><td width="300"><input size="35" id="watchDirField" type="text" name="watchDirField" onclick="$(this).css('color','green');"/></td><td><button  id="watchDir"  type="button">Save</button></td>
+  </tr>
+  <tr>
+    <td  align="right">MovieSync URL:</td><td width="300"><input size="35" id="urlField" type="text" name="urlField" onclick="$(this).css('color','green');"/></td><td><button  id="url"  type="button">Save</button></td>
+  </tr>
+</table>
+<table  width="500">
+  <tr>
+    <td  align="right"  width="400">MovieSync Database Connection Status:</td><td  width="100"><div id="dbstatus">NO</div></td>
+  </tr>
+ </table>
+
+<center>
+<div id="displayArea" style="border : solid 1px #ff0000;font-size:12px; background : #000000; color : #ffffff; padding : 10px;margin:10px; width : 540px; height : 205px; overflow : auto; ">
+</div>
+
+<script>
+for (fieldkey in globalFieldNames) {
+  var fieldname = globalFieldNames[fieldkey];
+  $("#"+fieldname).bind("click", function(event){ 
+      var currentId = $(this).attr('id');   
+      var value = $("#"+currentId+"Field").val();
+	  $("#"+currentId+"Field").css('color','green');
+	  dbQuery = new air.SQLStatement();
+	  dbQuery.sqlConnection = db;
+  	  dbQuery.text = "update preferences set value='"+value+"' where name='"+currentId+"'";
+	  try {     
+        dbQuery.execute();     
+      } catch (error) {     
+        air.trace("Error setting preferences "+currentId+" to DB:", error);     
+        air.trace(error.message);  
+		$("#"+currentId+"Field").css('color','red');   
+        return;     
+      }
+	  $("#"+currentId+"Field").css('color','blue');
+	  globalFieldArray[currentId] = value;
+  });
+}
+
+</script>
+</body>
+</html>
