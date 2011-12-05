@@ -9,13 +9,15 @@
 <script>
 
 
-var db = new air.SQLConnection(); 
+var prefs_db = new air.SQLConnection(); 
+var store_db = new air.SQLConnection(); 
 var globalFieldNames = ["username","password","watchDir","url"];
 var globalFieldArray = [];
 var globalLoggedin = false;
 var globalvar1 = false;
 
 function dbConnect() {
+  //first the prefs db
   var dbFile = air.File.applicationStorageDirectory.resolvePath("prefs.db"); 
   if (!dbFile.exists) {  
     var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db");  
@@ -23,7 +25,24 @@ function dbConnect() {
   }  
   try 
   {
-    db.open(dbFile); 
+    prefs_db.open(dbFile); 
+    air.trace("DB opened");
+  }
+  catch (error)
+  { 
+    air.trace("DB error:", error.message);
+    air.trace("Details:", error.details); 
+  }
+
+ //then the filestore db
+  dbFile = air.File.applicationStorageDirectory.resolvePath("mediafilestore.db"); 
+  if (!dbFile.exists) {  
+    var dbTemplate = air.File.applicationDirectory.resolvePath("mediafilestore-base.db");  
+    dbTemplate.copyTo(dbFile, true);    
+  }  
+  try 
+  {
+    store_db.open(dbFile); 
     air.trace("DB opened");
   }
   catch (error)
@@ -74,13 +93,65 @@ function logout(){
  };
 
 
+function getFilesRecursive(folder) {
+            //the current folder object
+            var currentFolder = new air.File(folder);
+            
+            //the current folder's file listing
+            var files = currentFolder.getDirectoryListing();
+            
+            //iterate and put files in the result and process the sub folders recursively
+            for (var f = 0; f < files.length; f++) {
+                if (files[f].isDirectory) {
+                    if (files[f].name !="." && files[f].name !="..") {
+                        //it's a directory
+                        getFilesRecursive(files[f].nativePath);
+                    }
+                } else {
+                    //it's a file yupeee
+                    //fileList.push(files[f].nativePath);
+	
+					var filepath = escape(files[f].nativePath);
+					var filename = filepath.replace(/^.*[\\\/]/, '')
+					dbQuery = new air.SQLStatement();
+	                dbQuery.sqlConnection = store_db;
+	                dbQuery.text = "SELECT path FROM mediafiles where path='"+filepath+"'";
+					globalvar1=true;
+	                try {     
+                      dbQuery.execute();     
+                    } catch (error) {     
+                      air.trace("Error processing store DB:", error); 
+					  air.trace("query=:", dbQuery.text);     
+                      air.trace(error.message);     
+                      return;     
+                    }
+					if (!dbQuery.getResult().data) { //doesnt exist, so insert
+					    if ((filename !=".DS_Store") && (filename.substring(0,2) != "._" )) {
+					        dbQuery.text = "INSERT INTO mediafiles (path,filename) values ('"+filepath+"','"+filename+"')";
+						    air.trace("inserting:", filename); 
+						}
+					}
+	                try {     
+                      dbQuery.execute();     
+                    } catch (error) {     
+                      air.trace("Error inserting to store DB:", error);     
+                      air.trace(error.message);     
+                      return;     
+                    }
+					
+               }
+           }            
+            
+}
+
 function loop() {
 	if (!globalLoggedin) login(); //login, or re-login if session expired
+	if (globalLoggedin && !globalvar1) getFilesRecursive(globalFieldArray["watchDir"]);
 }
 
 function updateField(field) {
     dbQuery = new air.SQLStatement();
-	dbQuery.sqlConnection = db;
+	dbQuery.sqlConnection = prefs_db;
 	dbQuery.text = "SELECT value FROM preferences where name='"+field+"'";
 	try {     
         dbQuery.execute();     
@@ -143,7 +214,7 @@ for (fieldkey in globalFieldNames) {
       var value = $("#"+currentId+"Field").val();
 	  $("#"+currentId+"Field").css('color','green');
 	  dbQuery = new air.SQLStatement();
-	  dbQuery.sqlConnection = db;
+	  dbQuery.sqlConnection = prefs_db;
   	  dbQuery.text = "update preferences set value='"+value+"' where name='"+currentId+"'";
 	  try {     
         dbQuery.execute();     
