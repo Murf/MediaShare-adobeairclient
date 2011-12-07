@@ -52,8 +52,9 @@ function dbConnect() {
   }
 }
 
-function loginHandler(event) 
+function loginCompleteHandler(event) 
 { 
+ air.trace("in handler");
     var loader = event.target; 
 	var myObject = JSON.parse(loader.data);
 	var result = myObject['result'];
@@ -65,12 +66,19 @@ function loginHandler(event)
 	  //need some error status here
 }
 
+function loginErrorHandler(event) 
+{ 
+   air.trace("URLLoader load error");
+
+}
+
 function login(){
 	if ( (globalFieldArray["username"] != 'Enter username' ) && (globalFieldArray["password"] != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of MediaShare Database')) {
-	    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/login.json?username="+globalFieldArray["username"]+"&password="+globalFieldArray["password"]); 
+        var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/login.json?username="+globalFieldArray["username"]+"&password="+globalFieldArray["password"]); 
         var loader = new air.URLLoader(); 
-	    loader.addEventListener(air.Event.COMPLETE, loginHandler);
         loader.load(request);
+	    loader.addEventListener(air.Event.COMPLETE, loginCompleteHandler);
+		loader.addEventListener(air.IOErrorEvent.IO_ERROR, loginErrorHandler);        
 	} 
  };
 
