@@ -14,6 +14,11 @@ var store_db = new air.SQLConnection();
 var globalFieldNames = ["username","password","watchDir","url"];
 var globalFieldArray = [];
 var globalLoggedin = false;
+var globalScannedmedia = false;
+var globalStartedUpload = false;
+var globalFilelistIndexArray = [];
+var globalFilelistIndexArrayIndex = 0;
+var globalIsUploading = false;
 var globalvar1 = false;
 
 function dbConnect() {
@@ -54,7 +59,6 @@ function dbConnect() {
 
 function loginCompleteHandler(event) 
 { 
- air.trace("in handler");
     var loader = event.target; 
 	var myObject = JSON.parse(loader.data);
 	var result = myObject['result'];
@@ -66,7 +70,7 @@ function loginCompleteHandler(event)
 	  //need some error status here
 }
 
-function loginErrorHandler(event) 
+function ErrorHandler(event) 
 { 
    air.trace("URLLoader load error");
 
@@ -78,7 +82,7 @@ function login(){
         var loader = new air.URLLoader(); 
         loader.load(request);
 	    loader.addEventListener(air.Event.COMPLETE, loginCompleteHandler);
-		loader.addEventListener(air.IOErrorEvent.IO_ERROR, loginErrorHandler);        
+		loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);        
 	} 
  };
 
@@ -124,7 +128,6 @@ function getFilesRecursive(folder) {
 					dbQuery = new air.SQLStatement();
 	                dbQuery.sqlConnection = store_db;
 	                dbQuery.text = "SELECT path FROM mediafiles where path='"+filepath+"'";
-					globalvar1=true;
 	                try {     
                       dbQuery.execute();     
                     } catch (error) {     
@@ -135,7 +138,7 @@ function getFilesRecursive(folder) {
                     }
 					if (!dbQuery.getResult().data) { //doesnt exist, so insert
 					    if ((filename !=".DS_Store") && (filename.substring(0,2) != "._" )) {
-					        dbQuery.text = "INSERT INTO mediafiles (path,filename) values ('"+filepath+"','"+filename+"')";
+					        dbQuery.text = "INSERT INTO mediafiles (path,filename,synced) values ('"+filepath+"','"+filename+"',FALSE)";
 						    air.trace("inserting:", filename); 
 						}
 					}
@@ -149,12 +152,61 @@ function getFilesRecursive(folder) {
 					
                }
            }            
-            
+           globalScannedmedia=true; 
 }
 
-function loop() {
-	if (!globalLoggedin) login(); //login, or re-login if session expired
-	if (globalLoggedin && !globalvar1) getFilesRecursive(globalFieldArray["watchDir"]);
+function uploadCompleteHandler(event) 
+{ 
+    var loader = event.target; 
+	var myObject = JSON.parse(loader.data);
+	var result = myObject['result'];
+	if (result == "ok") {
+	   dbQuery = new air.SQLStatement();
+	   dbQuery.sqlConnection = store_db;
+	   var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
+	   dbQuery.text = "update mediafiles set synced=true where id='"+uploadID+"'";
+	   try {     
+             dbQuery.execute();     
+        } catch (error) {     
+              air.trace("Error processing store DB:", error); 
+		      air.trace("query=:", dbQuery.text);     
+              air.trace(error.message);     
+              return; 
+		}
+		globalFilelistIndexArrayIndex++;
+		globalIsUploading = false;
+	}
+	//else
+	  //need some error status here
+}
+
+function incrementalUpload() {
+	if (!globalStartedUpload) {
+	    dbQuery = new air.SQLStatement();
+	    dbQuery.sqlConnection = store_db;
+	    dbQuery.text = "SELECT id,path FROM mediafiles";
+	    try {     
+            dbQuery.execute();     
+        } catch (error) {     
+            air.trace("Error processing store DB:", error); 
+			air.trace("query=:", dbQuery.text);     
+            air.trace(error.message);     
+            return;     
+        }
+		globalFilelistIndexArray = dbQuery.getResult().data;
+		globalStartedUpload = true;
+	} else {
+		if (!globalIsUploading) {
+			globalIsUploading=true;
+		    var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
+			var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path; 
+			var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filepath); 
+            var loader = new air.URLLoader(); 
+            loader.load(request);
+	        loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
+		    loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);        
+		}
+	}
 }
 
 function updateField(field) {
@@ -174,6 +226,13 @@ function updateField(field) {
 	$(tag).val(value);
 }
   
+function loop() {
+	if (!globalLoggedin) login(); //login, or re-login if session expired
+	//if (globalLoggedin && !globalScannedmedia) getFilesRecursive(globalFieldArray["watchDir"]);
+globalScannedmedia=true;
+	if (globalLoggedin && globalScannedmedia) incrementalUpload();
+}
+
 window.onload = function() {
 	dbConnect();
 	
