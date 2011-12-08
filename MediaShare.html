@@ -19,6 +19,7 @@ var globalStartedUpload = false;
 var globalFilelistIndexArray = [];
 var globalFilelistIndexArrayIndex = 0;
 var globalIsUploading = false;
+var globalFinishedUpload = false;
 var globalvar1 = false;
 
 function dbConnect() {
@@ -106,6 +107,7 @@ function logout(){
 
 
 function getFilesRecursive(folder) {
+	         var pathToRemove = globalFieldArray["watchDir"];
             //the current folder object
             var currentFolder = new air.File(folder);
             
@@ -120,14 +122,13 @@ function getFilesRecursive(folder) {
                         getFilesRecursive(files[f].nativePath);
                     }
                 } else {
-                    //it's a file yupeee
-                    //fileList.push(files[f].nativePath);
-	
 					var filepath = escape(files[f].nativePath);
-					var filename = filepath.replace(/^.*[\\\/]/, '')
+					filepath=filepath.replace(pathToRemove,'');
+					var filename = filepath.replace(/^.*[\\\/]/, '');
+					filepath=filepath.replace(filename,'');
 					dbQuery = new air.SQLStatement();
 	                dbQuery.sqlConnection = store_db;
-	                dbQuery.text = "SELECT path FROM mediafiles where path='"+filepath+"'";
+	                dbQuery.text = "SELECT * FROM mediafiles where path='"+filepath+"' and filename='"+filename+"'";
 	                try {     
                       dbQuery.execute();     
                     } catch (error) {     
@@ -149,7 +150,6 @@ function getFilesRecursive(folder) {
                       air.trace(error.message);     
                       return;     
                     }
-					
                }
            }            
            globalScannedmedia=true; 
@@ -174,6 +174,7 @@ function uploadCompleteHandler(event)
               return; 
 		}
 		globalFilelistIndexArrayIndex++;
+		if (globalFilelistIndexArrayIndex>=globalFilelistIndexArray.length) globalFinishedUpload = true;
 		globalIsUploading = false;
 	}
 	//else
@@ -184,7 +185,7 @@ function incrementalUpload() {
 	if (!globalStartedUpload) {
 	    dbQuery = new air.SQLStatement();
 	    dbQuery.sqlConnection = store_db;
-	    dbQuery.text = "SELECT id,path FROM mediafiles";
+	    dbQuery.text = "SELECT * FROM mediafiles";
 	    try {     
             dbQuery.execute();     
         } catch (error) {     
@@ -198,13 +199,20 @@ function incrementalUpload() {
 	} else {
 		if (!globalIsUploading) {
 			globalIsUploading=true;
-		    var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
-			var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path; 
-			var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filepath); 
-            var loader = new air.URLLoader(); 
-            loader.load(request);
-	        loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
-		    loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);        
+			if (!globalFilelistIndexArray[globalFilelistIndexArrayIndex].synced) {
+		        var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
+			    var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path;
+			    var filename = globalFilelistIndexArray[globalFilelistIndexArrayIndex].filename; 
+			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath); 
+                var loader = new air.URLLoader(); 
+                loader.load(request);
+	            loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
+		        loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);  
+			} else {
+			    globalFilelistIndexArrayIndex++;
+		        if (globalFilelistIndexArrayIndex>=globalFilelistIndexArray.length) globalFinishedUpload = true;
+		        globalIsUploading = false;
+			}
 		}
 	}
 }
@@ -228,9 +236,8 @@ function updateField(field) {
   
 function loop() {
 	if (!globalLoggedin) login(); //login, or re-login if session expired
-	//if (globalLoggedin && !globalScannedmedia) getFilesRecursive(globalFieldArray["watchDir"]);
-globalScannedmedia=true;
-	if (globalLoggedin && globalScannedmedia) incrementalUpload();
+	if (globalLoggedin && !globalScannedmedia) getFilesRecursive(globalFieldArray["watchDir"]);
+	if (globalLoggedin && globalScannedmedia && !globalFinishedUpload) incrementalUpload();
 }
 
 window.onload = function() {
