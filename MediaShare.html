@@ -185,7 +185,7 @@ function incrementalUpload() {
 	if (!globalStartedUpload) {
 	    dbQuery = new air.SQLStatement();
 	    dbQuery.sqlConnection = store_db;
-	    dbQuery.text = "SELECT * FROM mediafiles where synced=false";
+	    dbQuery.text = "SELECT * FROM mediafiles where synced=0";
 	    try {     
             dbQuery.execute();     
         } catch (error) {     
@@ -194,12 +194,12 @@ function incrementalUpload() {
             air.trace(error.message);     
             return;     
         }
-		if (dbQuery.getResult().data) { 
+//		if (!dbQuery.getResult().data) {
+//			globalFinishedUpload = true;
+//	    } else {	  
 		  globalFilelistIndexArray = dbQuery.getResult().data;
 		  globalStartedUpload = true;
-		} else {
-			globalFinishedUpload = true;
-		}
+//      	}
 	} else {
 		if (!globalIsUploading) {
 			globalIsUploading=true;
@@ -207,8 +207,8 @@ function incrementalUpload() {
 		        var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
 			    var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path;
 			    var filename = globalFilelistIndexArray[globalFilelistIndexArrayIndex].filename; 
-			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath); 
-				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath);
+			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID); 
+				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID);
                 var loader = new air.URLLoader(); 
                 loader.load(request);
 	            loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
