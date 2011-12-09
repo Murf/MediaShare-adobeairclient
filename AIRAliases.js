@@ -19,13 +19,13 @@ if (window.runtime)
     air.trace = window.runtime.trace;
     air.navigateToURL = window.runtime.flash.net.navigateToURL;
     air.sendToURL = window.runtime.flash.net.sendToURL;
-    air.generateRandomBytes = window.runtime.flash.crypto.generateRandomBytes;
+
 
     // file
     air.File = window.runtime.flash.filesystem.File;
     air.FileStream = window.runtime.flash.filesystem.FileStream;
     air.FileMode = window.runtime.flash.filesystem.FileMode;
-    air.StorageVolume = window.runtime.flash.filesystem.StorageVolume;
+
     air.StorageVolumeInfo = window.runtime.flash.filesystem.StorageVolumeInfo;
 
     // events
@@ -57,11 +57,6 @@ if (window.runtime)
     air.NativeProcessExitEvent = window.runtime.flash.events.NativeProcessExitEvent;
     air.UncaughtErrorEvent = window.runtime.flash.events.UncaughtErrorEvent;
     air.MouseEvent = window.runtime.flash.events.MouseEvent;
-    air.LocationChangeEvent = window.runtime.flash.events.LocationChangeEvent;
-    air.NetDataEvent = window.runtime.flash.events.NetDataEvent;
-    air.NetMonitorEvent = window.runtime.flash.events.NetMonitorEvent;
-    air.UncaughtErrorEvents = window.runtime.flash.events.UncaughtErrorEvents;
-
 
     // native window
     air.NativeWindow = window.runtime.flash.display.NativeWindow;
@@ -70,9 +65,9 @@ if (window.runtime)
     air.NativeWindowSystemChrome = window.runtime.flash.display.NativeWindowSystemChrome;
     air.NativeWindowResize = window.runtime.flash.display.NativeWindowResize;
     air.NativeWindowType = window.runtime.flash.display.NativeWindowType;
+
     air.NativeWindowBoundsEvent = window.runtime.flash.events.NativeWindowBoundsEvent;
     air.NativeWindowDisplayStateEvent = window.runtime.flash.events.NativeWindowDisplayStateEvent;
-    air.NativeWindowRenderMode = window.runtime.flash.display.NativeWindowRenderMode;
 
     // geom
     air.Point = window.runtime.flash.geom.Point;
@@ -84,22 +79,6 @@ if (window.runtime)
     air.Vector3D  = window.runtime.flash.geom.Vector3D;
     air.Orientation3D  = window.runtime.flash.geom.Orientation3D;
     air.Utils3D  = window.runtime.flash.geom.Utils3D;
-    air.Stage3D = window.runtime.flash.display.Stage3D;
-    air.Context3D = window.runtime.flash.display3D.Context3D;
-    air.Context3DBlendFactor = window.runtime.flash.display3D.Context3DBlendFactor;
-    air.Context3DClearMask = window.runtime.flash.display3D.Context3DClearMask;
-    air.Context3DCompareMode = window.runtime.flash.display3D.Context3DCompareMode;
-    air.Context3DProgramType = window.runtime.flash.display3D.Context3DProgramType;
-    air.Context3DRenderMode = window.runtime.flash.display3D.Context3DRenderMode;
-    air.Context3DStencilAction = window.runtime.flash.display3D.Context3DStencilAction;
-    air.Context3DTextureFormat = window.runtime.flash.display3D.Context3DTextureFormat;
-    air.Context3DTriangleFace = window.runtime.flash.display3D.Context3DTriangleFace;
-    air.Context3DVertexBufferFormat = window.runtime.flash.display3D.Context3DVertexBufferFormat;
-    air.IndexBuffer3D = window.runtime.flash.display3D.IndexBuffer3D;
-    air.Program3D = window.runtime.flash.display3D.Program3D;
-    air.CubeTexture = window.runtime.flash.display3D.textures.CubeTexture;
-    air.Texture = window.runtime.flash.display3D.textures.Texture;
-    air.VertexBuffer3D = window.runtime.flash.display3D.VertexBuffer3D;
     
     // Shader    
     air.Shader = window.runtime.flash.display.Shader;
@@ -148,13 +127,6 @@ if (window.runtime)
     air.PTRRecord = window.runtime.flash.net.dns.PTRRecord;
     air.SRVRecord = window.runtime.flash.net.dns.SRVRecord;
 
-    air.ResourceRecord = window.runtime.flash.net.dns.ResourceRecord;
-    air.InterfaceAddress = window.runtime.flash.net.InterfaceAddress;
-    air.NetMonitor = window.runtime.flash.net.NetMonitor;
-    air.NetStreamAppendBytesAction = window.runtime.flash.net.NetStreamAppendBytesAction;
-    air.NetStreamMulticastInfo = window.runtime.flash.net.NetStreamMulticastInfo;
-    air.NetworkInterface = window.runtime.flash.net.NetworkInterface;
-
     // system
     air.Capabilities = window.runtime.flash.system.Capabilities;
     air.System = window.runtime.flash.system.System;
@@ -180,7 +152,7 @@ if (window.runtime)
 
     air.NativeProcess = window.runtime.flash.desktop.NativeProcess;
     air.NativeProcessStartupInfo = window.runtime.flash.desktop.NativeProcessStartupInfo;
-  
+   
     // display
     air.NativeMenu = window.runtime.flash.display.NativeMenu;
     air.NativeMenuItem = window.runtime.flash.display.NativeMenuItem;
@@ -194,8 +166,6 @@ if (window.runtime)
     air.Keyboard = window.runtime.flash.ui.Keyboard;
     air.KeyLocation = window.runtime.flash.ui.KeyLocation;
     air.Mouse = window.runtime.flash.ui.Mouse;
-    air.KeyboardType = window.runtime.flash.ui.KeyboardType;
-    air.MouseCursorData = window.runtime.flash.ui.MouseCursorData;
 
 
     //security
@@ -204,9 +174,7 @@ if (window.runtime)
     air.SignatureStatus = window.runtime.flash.security.SignatureStatus;
     air.SignerTrustSettings = window.runtime.flash.security.SignerTrustSettings;
     air.XMLSignatureValidator = window.runtime.flash.security.XMLSignatureValidator;
-    air.X500DistinguishedName = window.runtime.flash.security.X500DistinguishedName;
-    air.X509Certificate = window.runtime.flash.security.X509Certificate;
-    
+        
 
     // utils
     air.ByteArray = window.runtime.flash.utils.ByteArray;
@@ -219,21 +187,6 @@ if (window.runtime)
 
     air.Vector = window.runtime.Vector;    
 
-    air.Collator = window.runtime.flash.globalization.Collator;
-    air.CollatorMode = window.runtime.flash.globalization.CollatorMode;
-    air.CurrencyFormatter = window.runtime.flash.globalization.CurrencyFormatter;
-    air.CurrencyParseResult = window.runtime.flash.globalization.CurrencyParseResult;
-    air.DateTimeFormatter = window.runtime.flash.globalization.DateTimeFormatter;
-    air.DateTimeNameContext = window.runtime.flash.globalization.DateTimeNameContext;
-    air.DateTimeNameStyle = window.runtime.flash.globalization.DateTimeNameStyle;
-    air.DateTimeStyle = window.runtime.flash.globalization.DateTimeStyle;
-    air.LastOperationStatus = window.runtime.flash.globalization.LastOperationStatus;
-    air.LocaleID = window.runtime.flash.globalization.LocaleID;
-    air.NationalDigitsType = window.runtime.flash.globalization.NationalDigitsType;
-    air.NumberFormatter = window.runtime.flash.globalization.NumberFormatter;
-    air.NumberParseResult = window.runtime.flash.globalization.NumberParseResult;
-    air.StringTools = window.runtime.flash.globalization.StringTools;
-
     // media
     air.ID3Info = window.runtime.flash.media.ID3Info;
     air.Sound = window.runtime.flash.media.Sound;
@@ -245,18 +198,6 @@ if (window.runtime)
     air.Video = window.runtime.flash.media.Video;
     air.Camera = window.runtime.flash.media.Camera;
     air.SoundCodec = window.runtime.flash.media.SoundCodec;
-    air.AudioDecoder = window.runtime.flash.media.AudioDecoder;
-    air.AudioPlaybackMode = window.runtime.flash.media.AudioPlaybackMode;
-    air.H264Level = window.runtime.flash.media.H264Level;
-    air.H264Profile = window.runtime.flash.media.H264Profile;
-    air.H264VideoStreamSettings = window.runtime.flash.media.H264VideoStreamSettings;
-    air.InputMediaStream = window.runtime.flash.media.InputMediaStream;
-    air.MicrophoneEnhancedMode = window.runtime.flash.media.MicrophoneEnhancedMode;
-    air.MicrophoneEnhancedOptions = window.runtime.flash.media.MicrophoneEnhancedOptions;
-    air.VideoCodec = window.runtime.flash.media.VideoCodec;
-    air.VideoStatus = window.runtime.flash.media.VideoStatus;
-    air.VideoStreamSettings = window.runtime.flash.media.VideoStreamSettings;
-
 
     // data
     air.EncryptedLocalStore = window.runtime.flash.data.EncryptedLocalStore;
