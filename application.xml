@@ -1,6 +1,6 @@
 <application xmlns="http://ns.adobe.com/air/application/3.1">
   <id>MediaShare</id>
-  <versionNumber>0.1</versionNumber>
+  <versionNumber>0.1.2</versionNumber>
   <filename>MediaShare</filename>
   <copyright></copyright>
   <customUpdateUI>false</customUpdateUI>

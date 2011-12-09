@@ -140,7 +140,7 @@ function getFilesRecursive(folder) {
 					if (!dbQuery.getResult().data) { //doesnt exist, so insert
 					    if ((filename !=".DS_Store") && (filename.substring(0,2) != "._" )) {
 					        dbQuery.text = "INSERT INTO mediafiles (path,filename,synced) values ('"+filepath+"','"+filename+"',FALSE)";
-						    air.trace("inserting:", filename); 
+						    air.trace("inserting:", filename);
 						}
 					}
 	                try {     
@@ -209,6 +209,8 @@ function incrementalUpload() {
 			    var filename = globalFilelistIndexArray[globalFilelistIndexArrayIndex].filename; 
 			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID); 
 				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID);
+				$("#displayArea").append("Syncing: "+unescape(filepath)+unescape(filename)+'<br>');
+	            $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
                 var loader = new air.URLLoader(); 
                 loader.load(request);
 	            loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
@@ -240,8 +242,16 @@ function updateField(field) {
 }
   
 function loop() {
-	if (!globalLoggedin) login(); //login, or re-login if session expired
-	if (globalLoggedin && !globalScannedmedia) getFilesRecursive(globalFieldArray["watchDir"]);
+	if (!globalLoggedin)  {
+	     $("#displayArea").append("Logging in.... <br>");
+	     $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
+		 login(); //login, or re-login if session expired
+	}
+	if (globalLoggedin && !globalScannedmedia) {
+	     $("#displayArea").append("Searching for media files.... <br>");
+	     $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
+         getFilesRecursive(globalFieldArray["watchDir"]);
+     }
 	if (globalLoggedin && globalScannedmedia && !globalFinishedUpload) incrementalUpload();
 }
 
@@ -281,7 +291,7 @@ window.onload = function() {
   </tr>
  </table>
 
-<center>
+
 <div id="displayArea" style="border : solid 1px #ff0000;font-size:12px; background : #000000; color : #ffffff; padding : 10px;margin:10px; width : 540px; height : 205px; overflow : auto; ">
 </div>
 
