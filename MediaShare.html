@@ -26,7 +26,8 @@ function dbConnect() {
   //first the prefs db
   var dbFile = air.File.applicationStorageDirectory.resolvePath("prefs.db");
   if (!dbFile.exists) {  
-    var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db");  
+    var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db"); //Blank fields
+ var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-dev.db");  //preconfigured
     dbTemplate.copyTo(dbFile, true);    
   }  
   try 
