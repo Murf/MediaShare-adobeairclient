@@ -11,7 +11,7 @@
 
 var prefs_db = new air.SQLConnection(); 
 var store_db = new air.SQLConnection(); 
-var globalFieldNames = ["username","password","watchDir","url"];
+var globalFieldNames = ["email","password","watchDir","url"];
 var globalFieldArray = [];
 var globalLoggedin = false;
 var globalScannedmedia = false;
@@ -62,8 +62,8 @@ function loginCompleteHandler(event)
 { 
     var loader = event.target; 
 	var myObject = JSON.parse(loader.data);
-	var result = myObject['result'];
-	if (result == "ok") {
+	var result = myObject['success'];
+	if (result == '1') {
 	   globalLoggedin = true;
 	   $("#dbstatus").html("YES");
 	}
@@ -75,13 +75,20 @@ function ErrorHandler(event)
 { 
    air.trace("URLLoader load error");
 
-}
+}				
 
 function login(){
-	if ( (globalFieldArray["username"] != 'Enter username' ) && (globalFieldArray["password"] != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of MediaShare Database')) {
-	     $("#displayArea").append("Logging in.... <br>");
-	     $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
-        var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/login.json?username="+globalFieldArray["username"]+"&password="+globalFieldArray["password"]); 
+	var email = globalFieldArray["email"];
+    var password = globalFieldArray["password"];	
+	if ( (email != 'Enter email' ) && (password != 'Enter password') && (globalFieldArray["url"] != 'Enter URL of MediaShare Database')) {
+		$("#displayArea").append("Logging in.... <br>");
+	    $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);		 
+		var data = '{"utf8" : "✓", "user" : {"email" : "'+email+'", "password" : "'+password+'", "remember_me" : "0"}, "commit" : "Sign in"}';
+		//var data = '{"remember_me" : "0", "password" : "'+password+'", "email" : "'+email+'"}';
+        var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/users/sign_in.json"); 
+		request.contentType = "application/json"; 
+		request.data = data;
+		request.method = air.URLRequestMethod.POST;  
         var loader = new air.URLLoader(); 
         loader.load(request);
 	    loader.addEventListener(air.Event.COMPLETE, loginCompleteHandler);
@@ -255,8 +262,8 @@ function loop() {
 }
 
 window.onload = function() {
-	dbConnect();
 	
+	dbConnect();
 	for (fieldkey in globalFieldNames) {
       updateField(globalFieldNames[fieldkey]);
     }
@@ -272,7 +279,7 @@ window.onload = function() {
 <br>
 <table width="580" >
   <tr>
-    <td width="150" align="right">Username:</td><td><input  size="35" id="usernameField" type="text" name="usernameField" onclick="$(this).css('color','green');"/></td><td><button  id="username"  type="button">Save</button></td>
+    <td width="150" align="right">Email:</td><td><input  size="35" id="emailField" type="text" name="emailField" onclick="$(this).css('color','green');"/></td><td><button  id="email"  type="button">Save</button></td>
   </tr>
   <tr>
     <td width="150" align="right">Password:</td><td><input  size="35" id="passwordField" type="text" name="passwordField" onclick="$(this).css('color','green');"/></td><td><button  id="password"  type="button">Save</button></td>
