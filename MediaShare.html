@@ -11,7 +11,7 @@
 
 var prefs_db = new air.SQLConnection(); 
 var store_db = new air.SQLConnection(); 
-var globalFieldNames = ["email","password","watchDir","url"];
+var globalFieldNames = ["email","password","watchDir","url","filter"];
 var globalFieldArray = [];
 var globalLoggedin = false;
 var globalScannedmedia = false;
@@ -26,8 +26,8 @@ function dbConnect() {
   //first the prefs db
   var dbFile = air.File.applicationStorageDirectory.resolvePath("prefs.db");
   if (!dbFile.exists) {  
-    var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db"); //Blank fields
- var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-dev.db");  //preconfigured
+    //var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-base.db"); //Blank fields
+    var dbTemplate = air.File.applicationDirectory.resolvePath("prefs-dev.db");  //preconfigured
     dbTemplate.copyTo(dbFile, true);    
   }  
   try 
@@ -117,7 +117,7 @@ function logout(){
 
 
 function getFilesRecursive(folder) {
-	         var pathToRemove = globalFieldArray["watchDir"];
+	        var pathToRemove = globalFieldArray["watchDir"];
             //the current folder object
             var currentFolder = new air.File(folder);
             
@@ -148,7 +148,8 @@ function getFilesRecursive(folder) {
                       return;     
                     }
 					if (!dbQuery.getResult().data) { //doesnt exist, so insert
-					    if ((filename !=".DS_Store") && (filename.substring(0,2) != "._" )) {
+					    var pattern=new RegExp(globalFieldArray["filter"]);
+					    if ((filename !=".DS_Store") && (filename.substring(0,2) != "._" ) && !pattern.test(filename)) {
 					        dbQuery.text = "INSERT INTO mediafiles (path,filename,synced) values ('"+filepath+"','"+filename+"',FALSE)";
 						    air.trace("inserting:", filename);
 						}
@@ -290,6 +291,9 @@ window.onload = function() {
   </tr>
   <tr>
     <td  align="right">MediaShare URL:</td><td width="300"><input size="35" id="urlField" type="text" name="urlField" onclick="$(this).css('color','green');"/></td><td><button  id="url"  type="button">Save</button></td>
+  </tr>
+  <tr>
+    <td  align="right">Filters (regexp):</td><td width="300"><input size="35" id="filterField" type="text" name="filterField" onclick="$(this).css('color','green');"/></td><td><button  id="filter"  type="button">Save</button></td>
   </tr>
 </table>
 <table  width="500">
