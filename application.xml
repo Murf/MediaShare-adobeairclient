@@ -11,6 +11,6 @@
     <systemChrome>standard</systemChrome>
     <visible>true</visible> 
         <width>590</width> 
-        <height>500</height> 
+        <height>600</height> 
   </initialWindow> 
 </application>

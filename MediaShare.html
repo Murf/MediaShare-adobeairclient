@@ -14,7 +14,6 @@ var store_db = new air.SQLConnection();
 var globalFieldNames = ["email","password","watchDir","url","filter"];
 var globalFieldArray = [];
 var globalLoggedin = false;
-var globalScannedmedia = false;
 var globalStartedUpload = false;
 var globalFilelistIndexArray = [];
 var globalFilelistIndexArrayIndex = 0;
@@ -67,6 +66,8 @@ function loginCompleteHandler(event)
 	if (result == '1') {
 	   globalLoggedin = true;
 	   $("#dbstatus").html("YES");
+	   $("#displayArea").append("Logged in.... <br>");
+	   $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);		
 	}
 	//else
 	  //need some error status here
@@ -132,7 +133,8 @@ function getFilesRecursive(folder) {
                         getFilesRecursive(files[f].nativePath);
                     }
                 } else {
-					var filepath = escape(files[f].nativePath);
+					//var filepath = escape(files[f].nativePath); was causing probs in windows, and cant see why I ever needed it
+					var filepath = files[f].nativePath;
 					filepath=filepath.replace(pathToRemove,'');
 					var filename = filepath.replace(/^.*[\\\/]/, '');
 					filepath=filepath.replace(filename,'');
@@ -163,7 +165,6 @@ function getFilesRecursive(folder) {
                     }
                }
            }            
-           globalScannedmedia=true; 
 }
 
 function uploadCompleteHandler(event) 
@@ -209,27 +210,36 @@ function incrementalUpload() {
 //			globalFinishedUpload = true;
 //	    } else {	  
 		  globalFilelistIndexArray = dbQuery.getResult().data;
+  		    if (globalFilelistIndexArray) 
 		  globalStartedUpload = true;
 //      	}
 	} else {
 		if (!globalIsUploading) {
 			globalIsUploading=true;
+			$("#scanFiles").attr("disabled", true);
+			$("#resetDB").attr("disabled", true);
+			$("#idlestatus").html("NO");
 			if (!globalFilelistIndexArray[globalFilelistIndexArrayIndex].synced) {
 		        var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
 			    var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path;
 			    var filename = globalFilelistIndexArray[globalFilelistIndexArrayIndex].filename; 
 			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID); 
-				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID);
-				$("#displayArea").append("Syncing: "+unescape(filepath)+unescape(filename)+'<br>');
+				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+escape(filepath)+"&remoteid="+uploadID);
+				$("#displayArea").append("Syncing: "+unescape(filepath)+unescape(filename)+' ('+(globalFilelistIndexArrayIndex+1)+' of '+(globalFilelistIndexArray.length)+')<br>');
 	            $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
                 var loader = new air.URLLoader(); 
                 loader.load(request);
 	            loader.addEventListener(air.Event.COMPLETE,  uploadCompleteHandler);
 		        loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);  
+				if (globalFilelistIndexArrayIndex>=(globalFilelistIndexArray.length-1)) {
+					globalFinishedUpload = true;
+				}
 			} else {
 			    globalFilelistIndexArrayIndex++;
-		        if (globalFilelistIndexArrayIndex>=globalFilelistIndexArray.length) globalFinishedUpload = true;
 		        globalIsUploading = false;
+				$("#scanFiles").removeAttr("disabled");
+				$("#resetDB").removeAttr("disabled");
+				$("#idlestatus").html("YES");
 			}
 		}
 	}
@@ -253,18 +263,33 @@ function updateField(field) {
 }
   
 function loop() {
-	if (!globalLoggedin) 
-		 login(); //login, or re-login if session expired
-	if (globalLoggedin && !globalScannedmedia) {
+	if (!globalLoggedin) {
+		$("#scanFiles").attr("disabled", true);
+		$("#idlestatus").html("NO");
+		login(); //login, or re-login if session expired
+	} else {
+		$("#scanFiles").removeAttr("disabled");
+		$("#resetDB").removeAttr("disabled");
+		$("#idlestatus").html("YES");
+	}
+	/* do this with button
+	if (globalLoggedin) {
 	     $("#displayArea").append("Searching for media files.... <br>");
 	     $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
          getFilesRecursive(globalFieldArray["watchDir"]);
      }
-	if (globalLoggedin && globalScannedmedia && !globalFinishedUpload) incrementalUpload();
+	 */
+	if (globalLoggedin && !globalFinishedUpload) {
+		incrementalUpload();
+	} 
+	//$("#displayArea").append("looping.... <br>");
+	//$("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
+	
 }
 
 window.onload = function() {
-	
+	$("#scanFiles").attr("disabled", true);
+	$("#resetDB").attr("disabled", true);
 	dbConnect();
 	for (fieldkey in globalFieldNames) {
       updateField(globalFieldNames[fieldkey]);
@@ -293,12 +318,20 @@ window.onload = function() {
     <td  align="right">MediaShare URL:</td><td width="300"><input size="35" id="urlField" type="text" name="urlField" onclick="$(this).css('color','green');"/></td><td><button  id="url"  type="button">Save</button></td>
   </tr>
   <tr>
-    <td  align="right">Filters (regexp):</td><td width="300"><input size="35" id="filterField" type="text" name="filterField" onclick="$(this).css('color','green');"/></td><td><button  id="filter"  type="button">Save</button></td>
+    <td  align="right">Filter (regexp):</td><td width="300"><input size="35" id="filterField" type="text" name="filterField" onclick="$(this).css('color','green');"/></td><td><button  id="filter"  type="button">Save</button></td>
   </tr>
 </table>
 <table  width="500">
   <tr>
     <td  align="right"  width="400">MediaShare Database Connection Status:</td><td  width="100"><div id="dbstatus">NO</div></td>
+  </tr>
+  <tr>
+    <td  align="right"  width="400">Idle:</td><td  width="100"><div id="idlestatus">NO</div></td>
+  </tr>
+ </table>
+ <table  width="500">
+  <tr>
+    <td align="center"><button  id="scanFiles"  type="button">Scan for Media</button></td><td align="center"><button  id="resetDB"  type="button">Reset DB</button></td>
   </tr>
  </table>
 
@@ -328,6 +361,51 @@ for (fieldkey in globalFieldNames) {
 	  globalFieldArray[currentId] = value;
   });
 }
+
+function resetDBCompleteHandler(event) 
+{
+	$("#scanFiles").removeAttr("disabled");
+	$("#resetDB").removeAttr("disabled");
+	$("#idlestatus").html("YES");
+}
+
+$("#resetDB").bind("click", function(event){ 
+	$("#scanFiles").attr("disabled", true);
+	$("#resetDB").attr("disabled", true);
+	$("#idlestatus").html("NO");
+	var agree=confirm("Are you sure you want to remove ALL media data here and on the portal?");
+	if (agree) {
+		dbQuery = new air.SQLStatement();
+		dbQuery.sqlConnection = store_db;
+		dbQuery.text = "DELETE FROM mediafiles";
+		try {     
+		  dbQuery.execute();     
+		} catch (error) {     
+		  air.trace("Error processing store DB:", error); 
+		  air.trace("query=:", dbQuery.text);     
+		  air.trace(error.message);     
+		  return;     
+		}
+		var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/destroyall.json"); 
+		var loader = new air.URLLoader(); 
+		loader.load(request);
+		loader.addEventListener(air.Event.COMPLETE,  resetDBCompleteHandler);
+		loader.addEventListener(air.IOErrorEvent.IO_ERROR, ErrorHandler);  
+	} else {
+		$("#scanFiles").removeAttr("disabled");
+		$("#resetDB").removeAttr("disabled");
+		$("#idlestatus").html("YES");
+	}
+});
+$("#scanFiles").bind("click", function(event){ 
+	$("#displayArea").append("Pressed scan button.... <br>");
+	$("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
+	if (globalLoggedin) {
+	     $("#displayArea").append("Searching for media files.... <br>");
+	     $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
+         getFilesRecursive(globalFieldArray["watchDir"]);
+     }	
+});
 
 </script>
 </body>
