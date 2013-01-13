@@ -86,7 +86,6 @@ function login(){
 		$("#displayArea").append("Logging in.... <br>");
 	    $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);		 
 		var data = '{"utf8" : "✓", "user" : {"email" : "'+email+'", "password" : "'+password+'", "remember_me" : "0"}, "commit" : "Sign in"}';
-		//var data = '{"remember_me" : "0", "password" : "'+password+'", "email" : "'+email+'"}';
         var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/users/sign_in.json"); 
 		request.contentType = "application/json"; 
 		request.data = data;
@@ -223,8 +222,11 @@ function incrementalUpload() {
 		        var uploadID = globalFilelistIndexArray[globalFilelistIndexArrayIndex].id; 
 			    var filepath = globalFilelistIndexArray[globalFilelistIndexArrayIndex].path;
 			    var filename = globalFilelistIndexArray[globalFilelistIndexArrayIndex].filename; 
-			    var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+filepath+"&remoteid="+uploadID); 
-				air.trace("http://"+globalFieldArray["url"]+"/mediafiles/insert.json?filename="+filename+"&relativepath="+escape(filepath)+"&remoteid="+uploadID);
+				var data = '{"filename":"'+filename+'", "relativepath":'+JSON.stringify(filepath)+', "remoteid":"'+uploadID+'"}'
+				var request = new air.URLRequest("http://"+globalFieldArray["url"]+"/mediafiles/insert.json"); 
+				request.contentType = "application/json"; 
+				request.data = data;
+				request.method = air.URLRequestMethod.POST;  
 				$("#displayArea").append("Syncing: "+unescape(filepath)+unescape(filename)+' ('+(globalFilelistIndexArrayIndex+1)+' of '+(globalFilelistIndexArray.length)+')<br>');
 	            $("#displayArea").scrollTop($("#displayArea")[0].scrollHeight);
                 var loader = new air.URLLoader(); 
